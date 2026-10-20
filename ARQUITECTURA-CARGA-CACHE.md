@@ -96,6 +96,10 @@ Los tests simulados no reemplazan una auditoria de RLS ni concurrencia SQL.
   para no romper guardados de resultado incierto. Su limpieza es una tarea aparte.
 - Cierre de caja diario retirado; se conservan los cierres mensuales y registros
   historicos existentes. No se borraron datos financieros.
-- Actualizaciones masivas de precio y acciones locales heredadas deben
-  verificarse individualmente antes de habilitarlas con datos productivos.
+- Precios masivos: ejecutar 202610200005_bulk_product_prices.sql. Operacion
+  atomica con auditoria por producto e idempotencia por operation_id. Alcanza
+  todos los productos activos de la categoria elegida o de toda la base, no
+  solo filas visitadas. Actualiza precio de lista, no costos ni promociones.
+  Confirmacion local y refresco de paginas solo tras respuesta del servidor.
+  Contratos frontend probados; SQL pendiente de instalacion y prueba real.
 - GitHub y Vercel pendientes de desplegar y verificar.

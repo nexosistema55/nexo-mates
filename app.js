@@ -6549,6 +6549,11 @@ function updatePriceUpdatePreview() {
   document.querySelector(".price-category-field")?.classList.toggle("is-hidden", scope !== "category");
   const products = productsForPriceUpdate();
   const preview = document.getElementById("priceUpdatePreview");
+  if (CLOUD_DATA_ENABLED && preview) {
+    const category = document.getElementById("priceUpdateCategory")?.value || "";
+    preview.textContent = scope === "category" ? `Categoria: ${category}` : "Todos los productos activos";
+    return;
+  }
   if (preview) preview.textContent = `Se modificarán ${products.length} ${products.length === 1 ? "Producto" : "Productos"}.`;
 }
 
@@ -6708,7 +6713,54 @@ async function saveProductUpdatingCost() {
   closeStockCostUpdateModal();
 }
 
-function applyPriceUpdate(percent) {
+let priceUpdateSaving = false;
+let priceUpdateOperation = null;
+
+async function applyPriceUpdate(percent) {
+  if (priceUpdateSaving) return;
+  if (!Number.isFinite(percent) || percent < -100 || percent > 10000) {
+    alert("Ingresa un porcentaje entre -100 y 10000.");
+    return;
+  }
+  if (CLOUD_DATA_ENABLED) {
+    const form = document.getElementById("priceUpdateForm");
+    const button = form.querySelector('[type="submit"]');
+    const scope = document.getElementById("priceUpdateScope")?.value || "all";
+    const category = scope === "category" ? document.getElementById("priceUpdateCategory")?.value || "" : null;
+    if (scope === "category" && !category) { alert("Elegi una categoria."); return; }
+    const signature = JSON.stringify({ percent, category });
+    if (priceUpdateOperation?.signature !== signature) priceUpdateOperation = { signature, id: cloudOperationId() };
+    priceUpdateSaving = true;
+    button.disabled = true;
+    try {
+      if (!cloudEnabledWithSession()) throw new Error("Ingresa para modificar precios.");
+      const { data, error } = await supabaseClient.rpc("update_product_prices", {
+        p_operation_id: priceUpdateOperation.id, p_percent: percent, p_category: category,
+        p_known_ids: state.products.map((product) => product.id).filter(isUuid).slice(0, 1000),
+      });
+      if (error) throw new Error(error.message);
+      if (!Number.isInteger(data?.updatedCount)) throw new Error("Respuesta incompleta al modificar precios.");
+      const confirmedPrices = new Map((data.priceChanges || []).map((row) => [row.id, row.price]));
+      state.products.forEach((product) => {
+        if (confirmedPrices.has(product.id)) product.price = Number(confirmedPrices.get(product.id));
+      });
+      invalidateCloudProductsCache();
+      // Invalidate cached pages only after the server confirms the transaction.
+      await loadCloudProductsPage(state.productFilters, state.productPage || 1, { force: true });
+      priceUpdateOperation = null;
+      logActivity("product", "Modifico precios en Supabase", `${data.updatedCount} productos (${percent}%)`);
+      saveState();
+      closePriceUpdateModal();
+      render();
+      showActionToast(`Precios guardados: ${data.updatedCount} productos.`);
+    } catch (error) {
+      alert(`No pude modificar precios: ${error.message}`);
+    } finally {
+      priceUpdateSaving = false;
+      button.disabled = false;
+    }
+    return;
+  }
   const products = productsForPriceUpdate();
   products.forEach((product) => {
     product.price = Math.round(Number(product.price || 0) * (1 + percent / 100));
@@ -6716,6 +6768,7 @@ function applyPriceUpdate(percent) {
   logActivity("product", "Modifico precios", `${products.length} productos (${percent}%)`);
   saveState();
   render();
+  closePriceUpdateModal();
 }
 
 function stockTrackedProducts() {
@@ -13718,7 +13771,6 @@ document.getElementById("priceUpdateForm").addEventListener("submit", (event) =>
   event.preventDefault();
   const data = formDataObject(event.target);
   applyPriceUpdate(Number(data.percent || 0));
-  closePriceUpdateModal();
 });
 
 document.getElementById("stockEntryForm").addEventListener("submit", (event) => {
