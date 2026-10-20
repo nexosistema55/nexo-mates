@@ -5728,7 +5728,9 @@ async function nextCloudProductCode(category, subcategory = "") {
   const prefix = prefixForCategory(category, subcategory);
   const { data, error } = await supabaseClient.rpc("get_next_product_code", { p_prefix: prefix });
   if (error) throw new Error(`codigo producto: ${error.message}`);
-  return String(data || nextProductCode(category, subcategory)).trim().toUpperCase();
+  const code = String(data || "").trim().toUpperCase();
+  if (!code) throw new Error("Supabase no devolvio un codigo de producto.");
+  return code;
 }
 
 function barcodeFromCode(code) {
@@ -5769,7 +5771,10 @@ function renderProductSubcategoryOptions(selectedCategory = null, selectedSubcat
   select.disabled = subcategories.length === 0;
 }
 
+let productCodeRequest = 0;
+
 function updateProductCode({ force = false } = {}) {
+  const request = ++productCodeRequest;
   const category = document.getElementById("productCategory")?.value;
   const subcategory = document.getElementById("productSubcategory")?.value;
   const code = document.getElementById("productCode");
@@ -5777,6 +5782,8 @@ function updateProductCode({ force = false } = {}) {
   const locked = isAccessoryCategory(category);
   const hint = document.getElementById("productCodeHint");
   if (code) {
+    code.removeAttribute("aria-busy");
+    code.placeholder = "Automatico";
     code.readOnly = locked;
     code.classList.toggle("locked-input", locked);
   }
@@ -5787,24 +5794,36 @@ function updateProductCode({ force = false } = {}) {
     return;
   }
   if (code && category) {
-    const localCode = nextProductCode(category, subcategory);
     const shouldAutofill = force || locked || !code.value;
-    if (shouldAutofill) code.value = localCode;
-    updateProductBarcode();
-    if (!editingId && !locked && cloudEnabledWithSession()) {
+    if (!editingId && !locked && cloudEnabledWithSession() && shouldAutofill) {
+      const previousCode = code.value;
+      code.placeholder = "Calculando...";
+      code.setAttribute("aria-busy", "true");
       nextCloudProductCode(category, subcategory)
         .then((cloudCode) => {
           const currentCategory = document.getElementById("productCategory")?.value;
           const currentSubcategory = document.getElementById("productSubcategory")?.value;
           const currentCode = document.getElementById("productCode");
-          if (!currentCode || currentCategory !== category || currentSubcategory !== subcategory) return;
-          if (force || !currentCode.value || currentCode.value === localCode) {
+          if (request !== productCodeRequest || !currentCode || currentCategory !== category || currentSubcategory !== subcategory) return;
+          if (currentCode.value === previousCode) {
             currentCode.value = cloudCode;
             updateProductBarcode();
           }
         })
-        .catch((error) => console.warn("Cloud product code failed", error));
+        .catch((error) => {
+          if (request === productCodeRequest) code.placeholder = "Se calculara al guardar";
+          console.warn("Cloud product code failed", error);
+        })
+        .finally(() => {
+          if (request === productCodeRequest) {
+            code.removeAttribute("aria-busy");
+            if (code.value) code.placeholder = "Automatico";
+          }
+        });
+      return;
     }
+    if (shouldAutofill) code.value = nextProductCode(category, subcategory);
+    updateProductBarcode();
   }
 }
 
@@ -6252,6 +6271,7 @@ function openProductModal(productId = null) {
 }
 
 function closeProductModal() {
+  productCodeRequest++;
   productVideoGeneration++;
   resetProductVideoPreview();
   const modal = document.getElementById("productModal");
