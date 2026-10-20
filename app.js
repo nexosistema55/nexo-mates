@@ -1388,10 +1388,15 @@ function normalizeCloudProduct(row = {}) {
 
 function mergeCloudProductsIntoState(rows = []) {
   const normalized = (rows || [])
-    .filter((product) => product.sku !== "MANUAL_INTERNAL")
+    .filter((product) => product.sku !== "MANUAL_INTERNAL" && !product.archived_at)
     .map(normalizeCloudProduct);
   if (!normalized.length) return [];
   const productsById = new Map((state.products || []).map((product) => [product.id, product]));
+  const activeIdsByCode = new Map(normalized.map((product) => [String(product.code || "").trim().toUpperCase(), product.id]));
+  productsById.forEach((product, id) => {
+    const activeId = activeIdsByCode.get(String(product.code || "").trim().toUpperCase());
+    if (activeId && activeId !== id) productsById.delete(id);
+  });
   normalized.forEach((product) => productsById.set(product.id, { ...productsById.get(product.id), ...product }));
   state.products = [...productsById.values()].sort((a, b) => compareProducts(a, b, "recent"));
   return normalized;
@@ -12846,6 +12851,7 @@ document.addEventListener("click", async (event) => {
                 return;
               }
               await archiveCloudRecord("product", product.id);
+              state.products = state.products.filter((item) => item.id !== product.id);
               invalidateCloudProductsCache();
               logActivity("product", "Archivo producto", `${product.code} - ${product.description}`);
               await loadCloudData();
@@ -13726,7 +13732,7 @@ document.getElementById("productForm").addEventListener("submit", async (event) 
     alert(`No pude calcular el código del producto en Supabase: ${error.message || "error desconocido"}`);
     return;
   }
-  if (!isAccessoryCategory(category) && state.products.some((product) => product.id !== editingId && String(product.code || "").toUpperCase() === code)) {
+  if (!CLOUD_DATA_ENABLED && !isAccessoryCategory(category) && state.products.some((product) => product.id !== editingId && String(product.code || "").toUpperCase() === code)) {
     alert("Ese Código ya existe. Elegí otro Código libre.");
     return;
   }

@@ -31,6 +31,11 @@ de foco siguen sin activar el refresh del modo de sincronizacion anterior.
 
 - Stock unico visible por producto. PostgreSQL conserva una unica fila UNICO
   interna para reutilizar validaciones y bloqueos transaccionales del esquema.
+- Codigos reciclables: 202610200006_recycle_product_codes.sql limita la unicidad
+  de codigo y slug a productos activos. El generador propone el primer codigo
+  libre de productos activos. No elimina ni modifica el codigo del archivado;
+  ventas y movimientos siguen vinculados por UUID al producto original.
+  Restaurar un archivado cuyo codigo ya se reutilizo requiere otro codigo libre.
 - Venta devuelve productos afectados; reposicion devuelve producto, movimiento
   y gasto. El frontend incorpora estas respuestas sin descargar todo.
 - Productos con operation_id estable durante reintentos; wrapper idempotente
