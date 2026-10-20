@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <script>if (location.protocol !== "file:") { const base = document.createElement("base"); base.href = "/catalogo/"; document.head.append(base); }</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catalogo Nexo Mates</title>
+    <meta name="description" content="Catalogo publico de Nexo Mates conectado a los productos reales del sistema.">
+    <meta name="theme-color" content="#111111">
+    <meta property="og:title" content="Catalogo Nexo Mates">
+    <meta property="og:description" content="Catalogo publico de Nexo Mates.">
+    <meta property="og:image" content="https://sistema-base-comercios.vercel.app/assets/nexo-mates-social.png?v=1">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://sistema-base-comercios.vercel.app/catalogo">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://sistema-base-comercios.vercel.app/assets/nexo-mates-social.png?v=1">
+    <link rel="manifest" href="../manifest.json?v=7">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/nexo-mates-favicon-32.png?v=1">
+    <link rel="apple-touch-icon" href="../assets/nexo-mates-apple-touch.png?v=1">
+    <link rel="stylesheet" href="catalogo.css?v=19">
+  </head>
+  <body>
+    <header class="catalog-header">
+      <a class="brand" href="index.html">
+        <span class="brand-mark" aria-hidden="true"><img src="../assets/nexo-mates-logo.png?v=1" alt=""></span>
+      </a>
+      <span class="status-pill" id="catalogStatus">Catalogo en preparacion</span>
+    </header>
+
+    <main class="catalog-shell">
+      <section class="catalog-intro">
+        <p>Catalogo publico</p>
+        <h1>Conoce nuestros productos</h1>
+      </section>
+
+      <section class="catalog-toolbar" aria-label="Filtros del catalogo">
+        <input id="catalogSearch" type="search" placeholder="Buscar producto">
+        <select id="catalogCategory" aria-label="Categoria">
+          <option value="all">Categorias</option>
+        </select>
+        <select id="catalogSubcategory" aria-label="Subcategoria">
+          <option value="all">Subcategorias</option>
+        </select>
+        <select id="catalogSort" aria-label="Ordenar productos">
+          <option value="new">Mas nuevos</option>
+          <option value="priceAsc">Menor precio</option>
+          <option value="priceDesc">Mayor precio</option>
+        </select>
+      </section>
+
+      <section class="catalog-grid" id="catalogGrid"></section>
+      <nav class="catalog-pagination" id="catalogPagination" aria-label="Paginacion del catalogo" hidden></nav>
+      <section class="catalog-empty" id="catalogEmpty" hidden>
+        <h2>Catalogo todavia no disponible</h2>
+        <p>Cuando creemos Supabase nuevo para Nexo Mates, esta pagina va a mostrar los mismos productos, precios, stock y variantes que cargues en el sistema interno.</p>
+      </section>
+    </main>
+
+    <script src="../config.js?v=2"></script>
+    <script src="config.js?v=2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../product-media.js?v=1"></script>
+    <script src="catalogo.js?v=28"></script>
+  </body>
+</html>

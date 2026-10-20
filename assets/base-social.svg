@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f7f9fa"/>
+  <rect x="72" y="72" width="1056" height="486" rx="44" fill="#17202a"/>
+  <circle cx="224" cy="315" r="92" fill="#f7f9fa"/>
+  <text x="224" y="344" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="800" fill="#17202a">SBC</text>
+  <text x="360" y="294" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="800" fill="#f7f9fa">Sistema Base Comercios</text>
+  <text x="360" y="360" font-family="Arial, Helvetica, sans-serif" font-size="32" fill="#d9e2ec">Base lista para un nuevo comercio</text>
+</svg>

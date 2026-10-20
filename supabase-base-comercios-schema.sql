@@ -1,0 +1,8 @@
+-- Reemplazado por la migracion robusta:
+-- supabase/migrations/202609150001_base_comercios_core.sql
+--
+-- Este archivo se conserva solo como puntero para evitar ejecutar
+-- el borrador viejo por error.
+--
+-- Ejecutar el SQL completo desde:
+-- C:\Users\Usuario\Documents\Codex\sistema-base-comercios\supabase\migrations\202609150001_base_comercios_core.sql
