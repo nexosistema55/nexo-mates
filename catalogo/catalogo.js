@@ -349,6 +349,7 @@ function productGallery(product) {
       <div class="gallery-stage">
         ${firstImage ? `<img class="gallery-main-image" data-gallery-main src="${escapeHtml(firstImage)}" alt="${escapeHtml(`${product.name} foto 1`)}">` : ""}
         ${hasVideo ? `<div class="catalog-video" ${firstImage ? "hidden" : ""}><button class="secondary-action" data-load-product-video="${escapeHtml(product.videoId || "")}" data-video-url="${escapeHtml(product.videoUrl || "")}" type="button">Reproducir video</button><p data-video-status role="status"></p><video controls playsinline preload="none" hidden></video></div>` : ""}
+        ${images.length + Number(hasVideo) > 1 ? `<button class="gallery-arrow gallery-prev" data-gallery-step="-1" type="button" aria-label="Imagen anterior" title="Anterior"><span aria-hidden="true">&#10094;</span></button><button class="gallery-arrow gallery-next" data-gallery-step="1" type="button" aria-label="Imagen siguiente" title="Siguiente"><span aria-hidden="true">&#10095;</span></button>` : ""}
       </div>
       ${images.length > 1 || hasVideo ? `
         <div class="gallery-thumbs" aria-label="Fotos y video del producto">
@@ -366,6 +367,38 @@ function productGallery(product) {
     </section>
   `;
 }
+
+function syncGalleryAspect(gallery) {
+  if (!gallery) return;
+  const stage = gallery.querySelector(".gallery-stage");
+  const image = gallery.querySelector("[data-gallery-main]");
+  const video = gallery.querySelector("video");
+  const showingImage = image && !image.hidden;
+  const width = showingImage ? image.naturalWidth : video?.videoWidth;
+  const height = showingImage ? image.naturalHeight : video?.videoHeight;
+  stage.style.aspectRatio = width > 0 && height > 0 ? `${width} / ${height}` : "4 / 5";
+}
+
+function stepProductGallery(gallery, delta) {
+  const thumbs = [...gallery.querySelectorAll("[data-gallery-thumb]")];
+  if (thumbs.length < 2) return;
+  const current = Math.max(0, thumbs.findIndex((thumb) => thumb.getAttribute("aria-current") === "true"));
+  thumbs[(current + delta + thumbs.length) % thumbs.length].click();
+}
+
+document.addEventListener("load", (event) => {
+  if (event.target.matches?.("[data-gallery-main]")) syncGalleryAspect(event.target.closest("[data-product-gallery]"));
+}, true);
+document.addEventListener("loadedmetadata", (event) => {
+  if (event.target.matches?.(".catalog-video video")) syncGalleryAspect(event.target.closest("[data-product-gallery]"));
+}, true);
+document.addEventListener("keydown", (event) => {
+  if (!["ArrowLeft", "ArrowRight"].includes(event.key) || event.target.matches?.("video, input, select, textarea")) return;
+  const gallery = event.target.closest?.("[data-product-gallery]");
+  if (!gallery) return;
+  event.preventDefault();
+  stepProductGallery(gallery, event.key === "ArrowLeft" ? -1 : 1);
+});
 
 function applyBusinessSettings(data = {}) {
   BASE_COMERCIOS_BUSINESS.businessName = data.business_name || data.businessName || BASE_COMERCIOS_BUSINESS.businessName;
@@ -521,6 +554,7 @@ function renderProductDetail(selectedSize = "") {
       </section>
     ` : ""}
   `;
+  syncGalleryAspect(detail.querySelector("[data-product-gallery]"));
   if (!detail.querySelector("[data-gallery-main]")) detail.querySelector(".gallery-video-thumb")?.click();
 }
 
@@ -706,11 +740,17 @@ window.addEventListener("message", (event) => {
 window.addEventListener("pagehide", () => { if (catalogVideoUrl) URL.revokeObjectURL(catalogVideoUrl); });
 
 document.addEventListener("click", async (event) => {
+  const galleryArrow = event.target.closest("[data-gallery-step]");
+  if (galleryArrow) {
+    stepProductGallery(galleryArrow.closest("[data-product-gallery]"), Number(galleryArrow.dataset.galleryStep));
+    return;
+  }
   const videoButton = event.target.closest("[data-load-product-video]");
   if (videoButton) {
     const gallery = videoButton.closest("[data-product-gallery]");
     const mainImage = gallery?.querySelector("[data-gallery-main]");
     if (mainImage) mainImage.hidden = true;
+    syncGalleryAspect(gallery);
     gallery?.querySelectorAll("[data-gallery-thumb]").forEach((button) => button.setAttribute("aria-current", String(button.hasAttribute("data-load-product-video"))));
     const container = gallery?.querySelector(".catalog-video");
     if (container) container.hidden = false;
@@ -782,6 +822,7 @@ document.addEventListener("click", async (event) => {
       mainImage.hidden = false;
       mainImage.src = galleryThumb.dataset.galleryImage;
       mainImage.alt = galleryThumb.dataset.galleryAlt || mainImage.alt;
+      syncGalleryAspect(gallery);
       gallery.querySelectorAll("[data-gallery-thumb]").forEach((button) => button.setAttribute("aria-current", "false"));
       galleryThumb.setAttribute("aria-current", "true");
     }
