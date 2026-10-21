@@ -731,6 +731,7 @@ td.row-actions .remove-line + .remove-line {
 
 [data-open-catalog-product],
 [data-edit-product],
+[data-expand-report],
 .settings-gear-button {
   border-color: #9f1420;
   color: #111;
@@ -739,6 +740,7 @@ td.row-actions .remove-line + .remove-line {
 
 [data-open-catalog-product]:hover,
 [data-edit-product]:hover,
+[data-expand-report]:hover,
 .settings-gear-button:hover {
   border-color: #800e1a;
   background: #ffe1e2;
@@ -746,6 +748,7 @@ td.row-actions .remove-line + .remove-line {
 
 [data-open-catalog-product]:focus-visible,
 [data-edit-product]:focus-visible,
+[data-expand-report]:focus-visible,
 .settings-gear-button:focus-visible {
   outline: 2px solid #800e1a;
   outline-offset: 2px;
