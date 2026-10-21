@@ -729,6 +729,25 @@ td.row-actions .remove-line + .remove-line {
   background: #f3faef;
 }
 
+[data-open-catalog-product],
+.settings-gear-button {
+  border-color: #9f1420;
+  color: #111;
+  background: #fff;
+}
+
+[data-open-catalog-product]:hover,
+.settings-gear-button:hover {
+  border-color: #800e1a;
+  background: #ffe1e2;
+}
+
+[data-open-catalog-product]:focus-visible,
+.settings-gear-button:focus-visible {
+  outline: 2px solid #800e1a;
+  outline-offset: 2px;
+}
+
 .danger-action {
   background: #fff;
   color: #800e1a;
