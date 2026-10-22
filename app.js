@@ -467,7 +467,8 @@ const commonProductColors = [
   "Fucsia",
   "Verde",
   "Beige",
-  "Marron",
+  "Marrón",
+  "Suela",
   "Camel",
   "Amarillo",
   "Naranja",
@@ -477,6 +478,7 @@ const commonProductColors = [
   "Crudo",
   "Jean",
   "Multicolor",
+  "Animal Print",
 ];
 
 const baseProductSubcategories = {
