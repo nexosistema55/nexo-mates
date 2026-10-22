@@ -470,6 +470,7 @@ function renderCatalogGrid() {
         <div class="card-actions">
           <a class="secondary-action" href="${catalogRootPath()}producto.html?slug=${encodeURIComponent(slug)}">Ver producto</a>
           <a class="whatsapp-action" href="${whatsappHref(product, firstSize)}" target="_blank" rel="noopener">WhatsApp</a>
+          ${catalogProductVarieties(product).length > 1 ? `<a class="catalog-add-button" href="${catalogRootPath()}producto.html?slug=${encodeURIComponent(slug)}">Elegir producto</a>` : `<button class="catalog-add-button" data-cart-add="${escapeHtml(product.id)}" data-cart-variant="${escapeHtml(catalogProductVarieties(product)[0]?.size || "")}" type="button" ${productHasStock(product) ? "" : "disabled"}>Agregar al carrito</button>`}
         </div>
       </article>
     `;
@@ -536,6 +537,7 @@ function renderProductDetail(selectedSize = "") {
           <div class="size-row">${sizeChips(product, true, activeSize)}</div>
         </div>` : ""}
         <p class="${productHasStock(product) ? "stock-ok" : "stock-out"}">${availabilityText(product)}</p>
+        <button class="catalog-add-button" data-cart-add="${escapeHtml(product.id)}" data-cart-variant="${escapeHtml(catalogProductVarieties(product).some((variant) => variant.size === activeSize) ? activeSize : "")}" type="button" ${productHasStock(product) ? "" : "disabled"}>Agregar al carrito</button>
         <a class="whatsapp-action full" id="productWhatsapp" href="${whatsappHref(product, activeSize)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
       </section>
     </article>
@@ -740,6 +742,15 @@ window.addEventListener("message", (event) => {
 window.addEventListener("pagehide", () => { if (catalogVideoUrl) URL.revokeObjectURL(catalogVideoUrl); });
 
 document.addEventListener("click", async (event) => {
+  const cartAdd = event.target.closest("[data-cart-add]");
+  if (cartAdd) {
+    const product = publicProducts().find((item) => item.id === cartAdd.dataset.cartAdd);
+    const variant = cartAdd.dataset.cartVariant || "";
+    if (!product || !productHasStock(product) || cartAdd.disabled) return;
+    if (variant && !product.sizes.some((item) => item.size === variant && (!product.tracksStock || item.stock > 0))) return;
+    window.NexoCatalogCart?.add({ id: product.id, slug: productSlug(product), name: product.name, code: product.code, price: effectivePrice(product), image: product.images[0] || "" }, variant);
+    return;
+  }
   const galleryArrow = event.target.closest("[data-gallery-step]");
   if (galleryArrow) {
     stepProductGallery(galleryArrow.closest("[data-product-gallery]"), Number(galleryArrow.dataset.galleryStep));
@@ -867,6 +878,21 @@ window.addEventListener("focus", () => {
     renderLocalCatalogState();
     requestLocalCatalogPreview();
   }
+});
+window.NexoCatalogCart?.configure({
+  getBusiness: () => BASE_COMERCIOS_BUSINESS,
+  resolve: async (item) => {
+    let product;
+    if (BASE_COMERCIOS_CATALOG_CONFIG.enabled) {
+      if (!catalogClient) throw new Error("Catalogo no disponible");
+      const { data, error } = await catalogClient.rpc("get_public_catalog_product", { p_slug: item.slug });
+      if (error) throw error;
+      product = data?.product ? normalizeCatalogProduct(data.product) : null;
+    } else product = publicProducts().find((product) => product.id === item.id);
+    if (!product || product.id !== item.id) return null;
+    const variantAvailable = !item.variant || product.sizes.some((variant) => variant.size === item.variant && (!product.tracksStock || variant.stock > 0));
+    return { id: product.id, name: product.name, code: product.code, price: effectivePrice(product), available: productHasStock(product) && variantAvailable };
+  },
 });
 loadCatalogProducts();
 requestLocalCatalogPreview();

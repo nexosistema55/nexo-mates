@@ -21,6 +21,12 @@ No se inicializo Git ni se publico en servicios externos.
   durante inicio y sincronizacion. Eliminar un cierre no elimina operaciones.
 - Catalogo: listado paginado, detalle/relacionados, debounce 250 ms y descarte
   de respuestas obsoletas. Visibilidad por stock en SQL antes de contar.
+- Carrito publico de consulta: catalogo/cart.js, persistencia local separada de
+  los datos internos, cantidades 1-99 y hasta 50 productos distintos. No crea
+  ventas, pagos ni reservas de stock. Antes de WhatsApp relee cada producto
+  mediante get_public_catalog_product; pide revisar si cambia el precio y
+  bloquea productos no disponibles o con UUID distinto (codigos reciclados).
+  Si el navegador bloquea la apertura automatica queda un enlace de envio.
 - PWA: archivos network-first para HTML/JS/CSS; Maps de consultas independientes.
   Borradores y preferencias locales no confirman operaciones remotas.
 
