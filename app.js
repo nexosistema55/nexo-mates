@@ -4986,6 +4986,14 @@ function customerMetaLabel(customer, { includeFallbackPhone = false } = {}) {
   return [duplicate, dni, phone, customer.province].filter(Boolean).join(" - ");
 }
 
+function customerPhoneMarkup(customer) {
+  const phone = String(customer.phone || "").trim();
+  const number = window.NexoCustomerPhones?.normalize(phone) || "";
+  if (!number) return `<span class="customer-phone-text">${htmlAttr(phone || "Sin Teléfono")}</span>`;
+  const label = `Abrir WhatsApp de ${customer.name || "cliente"} al ${phone} (nueva pestaña)`;
+  return `<a class="customer-whatsapp-link" href="https://wa.me/${number}" target="_blank" rel="noopener noreferrer" title="${htmlAttr(label)}" aria-label="${htmlAttr(label)}"><img src="assets/whatsapp.svg" width="16" height="16" alt="" aria-hidden="true"><span>${htmlAttr(phone)}</span></a>`;
+}
+
 function customerDisplayLabel(customer) {
   const dni = customer.dni ? `DNI ${formatCustomerDni(customer.dni)}` : "";
   return [customer.name, customerDuplicateLabel(customer), dni, customer.phone, customer.province].filter(Boolean).join(" - ");
@@ -10009,9 +10017,11 @@ function renderCustomers() {
     return `
       <tr>
         <td>
-          <strong>${htmlAttr(customer.name)}${customerDuplicateLabel(customer) ? ` <span class="customer-duplicate-badge">${customerDuplicateLabel(customer)}</span>` : ""}</strong><br>
-          <small>${htmlAttr(customerMetaLabel(customer, { includeFallbackPhone: true }))}</small>
-          ${note ? `<br><small class="customer-note-line">${htmlAttr(note)}</small>` : ""}
+          <strong>${htmlAttr(customer.name)}${customerDuplicateLabel(customer) ? ` <span class="customer-duplicate-badge">${customerDuplicateLabel(customer)}</span>` : ""}</strong>
+          <div class="customer-phone-line">${customerPhoneMarkup(customer)}</div>
+          ${customer.dni ? `<small class="customer-identity-line">DNI ${htmlAttr(formatCustomerDni(customer.dni))}</small>` : ""}
+          ${customer.province ? `<small class="customer-identity-line">${htmlAttr(customer.province)}</small>` : ""}
+          ${note ? `<small class="customer-note-line customer-identity-line">${htmlAttr(note)}</small>` : ""}
         </td>
         <td>${stats.salesCount}</td>
         <td>${money(stats.total)}</td>

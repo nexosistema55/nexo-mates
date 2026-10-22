@@ -607,6 +607,28 @@ td.row-actions .remove-line + .remove-line {
   font-style: italic;
 }
 
+.customer-phone-line { display: flex; align-items: center; margin: 6px 0; }
+.customer-whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  max-width: 100%;
+  padding: 3px 0;
+  color: #2e7d55;
+  text-decoration: none;
+  vertical-align: middle;
+}
+.customer-whatsapp-link img { flex: 0 0 16px; width: 16px; height: 16px; }
+.customer-whatsapp-link span { min-width: 0; overflow-wrap: anywhere; }
+.customer-whatsapp-link:hover { color: #205c3e; text-decoration: underline; }
+.customer-whatsapp-link:focus-visible { outline: 2px solid #2e7d55; outline-offset: 3px; border-radius: 3px; }
+.customer-phone-text { display: inline-block; padding: 6px 0; color: var(--muted); overflow-wrap: anywhere; }
+.customer-identity-line { display: block; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  .customer-whatsapp-link { min-height: 44px; padding: 8px 0; }
+}
+
 .customer-debt-panel {
   display: grid;
   gap: 8px;
