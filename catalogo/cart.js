@@ -37,12 +37,11 @@
   const dialog = document.createElement('dialog');
   dialog.className = 'catalog-cart-dialog';
   dialog.setAttribute('aria-labelledby', 'catalogCartTitle');
-  dialog.innerHTML = `<div class="catalog-cart-layout"><header class="catalog-cart-head"><h2 id="catalogCartTitle">Tu carrito</h2><button type="button" data-cart-close aria-label="Cerrar carrito" title="Cerrar">&times;</button></header><div class="catalog-cart-items"></div><footer class="catalog-cart-footer"><div class="catalog-cart-total"><span>Total estimado</span><strong></strong></div><p role="status" class="catalog-cart-status"></p><button type="button" class="catalog-cart-checkout">Consultar pedido por WhatsApp</button><a class="catalog-cart-send" target="_blank" rel="noopener" hidden>Enviar pedido por WhatsApp</a><button type="button" class="catalog-cart-continue">Seguir viendo productos</button></footer></div>`;
+  dialog.innerHTML = `<div class="catalog-cart-layout"><header class="catalog-cart-head"><h2 id="catalogCartTitle">Tu carrito</h2><button type="button" data-cart-close aria-label="Cerrar carrito" title="Cerrar">&times;</button></header><div class="catalog-cart-items"></div><footer class="catalog-cart-footer"><div class="catalog-cart-total"><span>Total estimado</span><strong></strong></div><p role="status" class="catalog-cart-status"></p><button type="button" class="catalog-cart-checkout">Consultar por WhatsApp</button><button type="button" class="catalog-cart-continue">Seguir viendo productos</button></footer></div>`;
   document.body.append(dialog);
   const list = dialog.querySelector('.catalog-cart-items');
   const status = dialog.querySelector('.catalog-cart-status');
   const checkout = dialog.querySelector('.catalog-cart-checkout');
-  const send = dialog.querySelector('.catalog-cart-send');
   function notify(message) {
     toast.textContent = message;
     toast.hidden = false;
@@ -51,8 +50,6 @@
   }
   function persist() {
     revision++;
-    send.hidden = true;
-    send.removeAttribute('href');
     try { localStorage.setItem(key, JSON.stringify(items)); }
     catch { notify('El navegador no permite guardar el carrito.'); }
   }
@@ -68,7 +65,7 @@
     }).join('') || '<div class="catalog-cart-empty">Tu carrito esta vacio.</div>';
     dialog.querySelector('.catalog-cart-total strong').textContent = money.format(items.reduce((total, item) => total + item.price * item.quantity, 0));
     checkout.disabled = busy || !items.length || items.some((item) => !item.available);
-    checkout.textContent = busy ? 'Consultando precios y disponibilidad...' : 'Consultar pedido por WhatsApp';
+    checkout.textContent = busy ? 'Consultando precios y disponibilidad...' : 'Consultar por WhatsApp';
   }
   function close() { dialog.close(); }
   trigger.addEventListener('click', () => {
@@ -113,7 +110,6 @@
     if (!/^\d{8,15}$/.test(phone)) { status.textContent = 'El WhatsApp del negocio no esta disponible.'; return; }
     busy = true;
     status.textContent = '';
-    send.hidden = true;
     const started = revision;
     const snapshot = items.map((item) => ({ ...item }));
     render();
@@ -132,11 +128,9 @@
       if (changed) { status.textContent = 'Actualizamos los precios. Revisa el total y volve a consultar.'; return; }
       const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const lines = [`Hola ${business.businessName}, quiero consultar por este pedido:`, '', ...items.map((item) => `${item.quantity} x ${item.name}${item.code ? ` (${item.code})` : ''}${item.variant ? ` - ${item.variant}` : ''} — ${money.format(item.price * item.quantity)}`), '', `Total estimado: ${money.format(total)}`, '', ...items.map((item) => { const url = new URL('producto.html', root); url.searchParams.set('slug', item.slug); return `${item.code || item.name}: ${url.href}`; })];
-      send.href = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
-      send.hidden = false;
-      status.textContent = 'Pedido listo para consultar.';
-      // A real link remains available if the browser blocks the new tab.
-      send.click();
+      const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`;
+      // Same-tab navigation avoids popup blockers after asynchronous validation.
+      window.location.assign(whatsappUrl);
     } catch {
       status.textContent = 'No pudimos verificar el pedido. Volve a intentar cuando tengas conexion.';
     } finally { busy = false; render(); }
@@ -145,7 +139,6 @@
     if (event.key !== key && event.key !== null) return;
     items = read();
     revision++;
-    send.hidden = true;
     render();
   });
   window.NexoCatalogCart = {

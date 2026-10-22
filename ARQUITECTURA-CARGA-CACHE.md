@@ -26,7 +26,7 @@ No se inicializo Git ni se publico en servicios externos.
   ventas, pagos ni reservas de stock. Antes de WhatsApp relee cada producto
   mediante get_public_catalog_product; pide revisar si cambia el precio y
   bloquea productos no disponibles o con UUID distinto (codigos reciclados).
-  Si el navegador bloquea la apertura automatica queda un enlace de envio.
+  Un unico boton verifica y navega a WhatsApp en la misma pestaña, sin popups.
 - PWA: archivos network-first para HTML/JS/CSS; Maps de consultas independientes.
   Borradores y preferencias locales no confirman operaciones remotas.
 

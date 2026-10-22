@@ -80,8 +80,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .catalog-cart-total strong { font-size: 24px; overflow-wrap: anywhere; }
 .catalog-cart-status { margin: 0; color: #800e1a; font-size: 14px; }
 .catalog-cart-status:empty { display: none; }
-.catalog-cart-checkout, .catalog-cart-send { display: block; width: 100%; min-height: 46px; padding: 12px; border: 1px solid #9f1420; border-radius: 8px; background: #ffd0d3; color: #111; font-weight: 700; text-align: center; }
-.catalog-cart-send[hidden] { display: none; }
+.catalog-cart-checkout { display: block; width: 100%; min-height: 46px; padding: 12px; border: 1px solid #9f1420; border-radius: 8px; background: #ffd0d3; color: #111; font-weight: 700; text-align: center; }
 .catalog-cart-continue { padding: 8px; border: 0; background: #fff; color: #800e1a; }
 .catalog-cart-empty { padding: 36px 0; text-align: center; color: var(--muted); }
 .catalog-cart-unavailable { font-size: 13px; color: #9f1420; }
