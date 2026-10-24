@@ -1,0 +1,3 @@
+[functions.cleanup-stale-products]
+# The worker checks its private Vault/Edge secret; public keys cannot invoke it.
+verify_jwt = false
