@@ -558,7 +558,7 @@ const defaultBusinessSettings = {
 };
 const defaultCatalogSettings = {
   businessName: "Nexo mates",
-  whatsappNumber: "+5493564560744",
+  whatsappNumber: "+5493564526723",
   defaultWhatsappMessage: "Hola {businessName}, quiero consultar por este producto:",
   sizeAvailabilityMode: "show-unavailable",
   outOfStockProductMode: "show",
@@ -2601,8 +2601,11 @@ function normalizeState(rawState) {
   next.catalogSettings = catalogSettings(next);
   if (!next.nexoContactConfiguredV1) {
     next.catalogSettings.businessName = "Nexo";
-    next.catalogSettings.whatsappNumber = "+5493564560744";
+    next.catalogSettings.whatsappNumber = "+5493564526723";
     next.nexoContactConfiguredV1 = true;
+  }
+  if (next.catalogSettings.whatsappNumber.replace(/\D/g, "") === "5493564560744") {
+    next.catalogSettings.whatsappNumber = "+5493564526723";
   }
   next.userLastSeen = normalizeUserLastSeen(next.userLastSeen);
   if (next.historicalCategoryImportId !== HISTORICAL_CATEGORY_IMPORT_ID) {

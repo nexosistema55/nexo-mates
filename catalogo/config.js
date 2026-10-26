@@ -1,6 +1,6 @@
 window.BASE_COMERCIOS_BUSINESS_CONFIG = {
   businessName: "Nexo mates",
-  whatsappNumber: "+5493564560744",
+  whatsappNumber: "+5493564526723",
   defaultWhatsappMessage: "Hola {businessName}, quiero consultar por este producto:",
   sizeAvailabilityMode: "show-unavailable",
   outOfStockProductMode: "show",
