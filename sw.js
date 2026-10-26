@@ -1,4 +1,4 @@
-const CACHE_NAME = "nexo-mates-control-v168";
+const CACHE_NAME = "nexo-mates-control-v169";
 const ASSETS = [
   "./",
   "./index.html",
@@ -13,7 +13,8 @@ const ASSETS = [
   "./assets/shopping-cart.svg",
   "./styles.css?v=125",
   "./product-media.js?v=1",
-  "./app.js?v=308",
+  "./app.js?v=309",
+  "./product-heic.js?v=1",
   "./customer-whatsapp.js?v=1",
   "./assets/whatsapp.svg",
   "./manifest.json?v=7",

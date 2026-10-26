@@ -1214,7 +1214,7 @@ function formatFileSize(bytes = 0) {
   return `${Math.round(value).toLocaleString("es-AR")} B`;
 }
 
-function optimizeProductImageDataUrl(dataUrl, { maxSize = PRODUCT_IMAGE_MAX_DIMENSION, quality = PRODUCT_IMAGE_WEBP_QUALITY } = {}) {
+function optimizeProductImageDataUrl(dataUrl, { maxSize = PRODUCT_IMAGE_MAX_DIMENSION, quality = PRODUCT_IMAGE_WEBP_QUALITY, forceWebp = false } = {}) {
   return new Promise((resolve) => {
     const type = String(dataUrl || "").match(/^data:image\/([^;]+);/i)?.[1]?.toLowerCase() || "";
     if (["gif", "svg+xml"].includes(type)) {
@@ -1243,7 +1243,7 @@ function optimizeProductImageDataUrl(dataUrl, { maxSize = PRODUCT_IMAGE_MAX_DIME
           optimized = canvas.toDataURL("image/webp", outputQuality);
         }
         // Keep the size limit even when resizing a small, highly compressed source.
-        resolve(ratio < 1 || optimized.length < dataUrl.length ? optimized : dataUrl);
+        resolve(forceWebp || ratio < 1 || optimized.length < dataUrl.length ? optimized : dataUrl);
       } catch {
         resolve(dataUrl);
       }
@@ -1254,9 +1254,14 @@ function optimizeProductImageDataUrl(dataUrl, { maxSize = PRODUCT_IMAGE_MAX_DIME
 }
 
 async function productImageFileToDataUrl(file) {
-  if (!file || !String(file.type || "").startsWith("image/")) return null;
-  const dataUrl = await readFileAsDataUrl(file);
-  const optimizedDataUrl = await optimizeProductImageDataUrl(dataUrl);
+  if (!NexoHeic.isImage(file)) return null;
+  const heic = NexoHeic.isHeic(file);
+  const prepared = await NexoHeic.prepare(file);
+  const dataUrl = await readFileAsDataUrl(prepared);
+  const optimizedDataUrl = await optimizeProductImageDataUrl(dataUrl, { forceWebp: heic });
+  if (heic && !optimizedDataUrl.startsWith("data:image/webp;")) {
+    throw new Error("No pude optimizar el HEIC. Probá exportarlo como JPG.");
+  }
   const originalBytes = Number(file.size || dataUrlByteLength(dataUrl));
   const finalBytes = dataUrlByteLength(optimizedDataUrl);
   return {
@@ -1283,8 +1288,15 @@ function renderProductImagePreview() {
     : `<div class="product-image-empty">Sin fotos cargadas</div>`;
 }
 
+let productImagesConverting = false;
+let productImageGeneration = 0;
 async function addProductImageFiles(files = []) {
-  const list = Array.from(files || []).filter((file) => String(file.type || "").startsWith("image/"));
+  if (productImagesConverting) return;
+  if (typeof productVideoBusy !== "undefined" && productVideoBusy) {
+    showActionToast("Esperá a que termine de procesarse el video.");
+    return;
+  }
+  const list = Array.from(files || []).filter(NexoHeic.isImage);
   if (!list.length) return;
   const availableSlots = Math.max(0, 8 - productImageDraft.length);
   if (!availableSlots) {
@@ -1294,12 +1306,36 @@ async function addProductImageFiles(files = []) {
   const selected = list.slice(0, availableSlots);
   let originalBytes = 0;
   let finalBytes = 0;
-  for (const file of selected) {
-    const result = await productImageFileToDataUrl(file);
-    if (!result?.dataUrl) continue;
-    originalBytes += Number(result.originalBytes || 0);
-    finalBytes += Number(result.finalBytes || result.originalBytes || 0);
-    productImageDraft = normalizeProductImageUrls([...productImageDraft, result.dataUrl]);
+  let loaded = 0;
+  let failed = 0;
+  let lastError = "";
+  const generation = productImageGeneration;
+  productImagesConverting = true;
+  const controls = [document.getElementById("productImageFiles"), document.getElementById("saveProductButton"), document.getElementById("productVideoFile")].filter(Boolean);
+  const previousDisabled = controls.map(control => control.disabled);
+  controls.forEach(control => { control.disabled = true; });
+  if (selected.some(NexoHeic.isHeic)) showActionToast("Convirtiendo fotos HEIC...");
+  try {
+    for (const file of selected) {
+      try {
+        const result = await productImageFileToDataUrl(file);
+        if (generation !== productImageGeneration) return;
+        if (!result?.dataUrl) continue;
+        originalBytes += Number(result.originalBytes || 0);
+        finalBytes += Number(result.finalBytes || result.originalBytes || 0);
+        productImageDraft = normalizeProductImageUrls([...productImageDraft, result.dataUrl]);
+        loaded++;
+      } catch (error) {
+        if (generation !== productImageGeneration) return;
+        failed++;
+        lastError = error.message || "No pude leer una de las fotos.";
+      }
+    }
+  } finally {
+    if (generation === productImageGeneration) {
+      productImagesConverting = false;
+      controls.forEach((control, index) => { control.disabled = previousDisabled[index]; });
+    }
   }
   renderProductImagePreview();
   const savedBytes = originalBytes - finalBytes;
@@ -1307,7 +1343,7 @@ async function addProductImageFiles(files = []) {
   const optimizationLabel = savedBytes > 0
     ? ` Optimizadas: ${formatFileSize(originalBytes)} -> ${formatFileSize(finalBytes)} (-${savedPercent}%).`
     : "";
-  showActionToast(`${selected.length} ${selected.length === 1 ? "foto cargada" : "fotos cargadas"}.${optimizationLabel}`);
+  showActionToast(`${loaded} ${loaded === 1 ? "foto cargada" : "fotos cargadas"}.${optimizationLabel}${failed ? ` ${failed} sin cargar: ${lastError}` : ""}`);
 }
 
 function slugifyCatalogValue(value) {
@@ -6204,6 +6240,9 @@ function applyEditedProductStockReduce() {
 }
 
 function openProductModal(productId = null) {
+  productImageGeneration++;
+  productImagesConverting = false;
+  document.getElementById("productImageFiles").disabled = false;
   const product = productId ? state.products.find((item) => item.id === productId) : null;
   productVideoGeneration++;
   productVideoBusy = false;
@@ -6286,6 +6325,8 @@ function openProductModal(productId = null) {
 }
 
 function closeProductModal() {
+  productImageGeneration++;
+  productImagesConverting = false;
   productCodeRequest++;
   productVideoGeneration++;
   resetProductVideoPreview();
@@ -13718,7 +13759,7 @@ document.getElementById("manualItemForm").addEventListener("submit", (event) => 
 
 document.getElementById("productForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (productVideoBusy) return;
+  if (productVideoBusy || productImagesConverting) return;
   renderProductImagePreview();
   syncProductVariantInputFromRows();
   const data = formDataObject(event.target);

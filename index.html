@@ -761,8 +761,8 @@
           <label class="modal-field full-field">
             <span>Fotos para catalogo publico</span>
             <input name="imageUrls" id="productImageUrls" type="hidden">
-            <input id="productImageFiles" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/*" multiple>
-            <small class="field-hint">Podés subir PNG, JPG, WebP y otros formatos de imagen. Si queda vacío, el catálogo muestra el logo.</small>
+            <input id="productImageFiles" type="file" accept=".heic,.heif,image/heic,image/heif,image/heic-sequence,image/heif-sequence,image/png,image/jpeg,image/webp,image/gif,image/avif,image/*" multiple>
+            <small class="field-hint">Podés subir PNG, JPG, WebP y HEIC/HEIF. Si queda vacío, el catálogo muestra el logo.</small>
             <div class="product-image-preview" id="productImagePreview"></div>
           </label>
           <div class="modal-field full-field">
@@ -1442,7 +1442,8 @@
     <script src="config.js?v=2"></script>
     <script src="product-media.js?v=1"></script>
     <script src="customer-whatsapp.js?v=1"></script>
-    <script src="app.js?v=308"></script>
+    <script src="product-heic.js?v=1"></script>
+    <script src="app.js?v=309"></script>
     <script>
       if ("serviceWorker" in navigator && location.protocol !== "file:") {
         navigator.serviceWorker.register("sw.js?v=297");
